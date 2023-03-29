@@ -49,6 +49,7 @@ const gameBoard = (() => {
         board[i + 3] === board[i + 6]
       ) {
         gameOver = true;
+        return gameOver;
       } else {
         let rowStart = i * 3;
         if (
@@ -57,6 +58,7 @@ const gameBoard = (() => {
           board[rowStart + 1] === board[rowStart + 2]
         ) {
           gameOver = true;
+          return gameOver;
         }
       }
     }
@@ -64,12 +66,14 @@ const gameBoard = (() => {
     // check on diagonals and if full board
     if (board[0] !== 0 && board[0] === board[4] && board[4] === board[8]) {
       gameOver = true;
+      return gameOver;
     } else if (
       board[2] !== 0 &&
       board[2] === board[4] &&
       board[4] === board[6]
     ) {
       gameOver = true;
+      return gameOver;
     } else if (
       board[0] !== 0 &&
       board[1] !== 0 &&
@@ -84,7 +88,6 @@ const gameBoard = (() => {
       gameOver = true;
       hasWinner = false;
     }
-    console.log(gameOver);
     return gameOver;
   };
 
@@ -112,21 +115,60 @@ const interface = (() => {
   const main = document.querySelector(".interface");
   const display = document.querySelector(".player-to-move");
   const restartBtn = document.querySelector("#restart");
+  let pOne, pTwo, cPlayer;
+
+  // Sets the name for player one and two
+  const setName = (one, two) => {
+    let playerOne, playerTwo, playerOneName, playerTwoName;
+
+    playerOne = document.querySelector("#Player-One");
+    playerTwo = document.querySelector("#Player-Two");
+    playerOneName = playerOne.value;
+    playerTwoName = playerTwo.value;
+
+    // ensure that name is not nothing
+    if (playerOneName === "") {
+      playerTwo.classList.remove("invalid");
+      playerOne.classList.add("invalid");
+      return false;
+    } else if (playerTwoName === "") {
+      playerOne.classList.remove("invalid");
+      playerTwo.classList.add("invalid");
+      return false;
+    }
+
+    one.setName(playerOneName);
+    two.setName(playerTwoName);
+    return true;
+  };
 
   const handleUserInput = (one, two, currentPlayer) => {
+    display.textContent = "Start by putting in player information.";
+
     const submitBtn = document.querySelector(".user-input");
     submitBtn.addEventListener("click", function () {
-      let playerOneName, playerTwoName;
-      playerOneName = document.querySelector("#Player-One").value;
-      playerTwoName = document.querySelector("#Player-Two").value;
+      let setNameSuccess;
 
-      one.setName(playerOneName);
-      two.setName(playerTwoName);
+      setNameSuccess = setName(one, two);
 
+      if (!setNameSuccess) {
+        return;
+      }
+
+      // add players to the module
+      pOne = one;
+      pTwo = two;
+      cPlayer = currentPlayer;
       removeInputInterface();
 
+      allowChangeName();
+
       // displays which player to move
-      interface.displayPlayer(currentPlayer, false, one);
+      interface.displayPlayer(
+        cPlayer,
+        gameBoard.checkGameOver(),
+        gameBoard.checkHasWinner()
+      );
     });
 
     // Handles the restart button
@@ -135,8 +177,88 @@ const interface = (() => {
     });
   };
 
+  // Help sets up the user input form
+  const setUpInputForm = (inputForm, playerType) => {
+    const player = document.createElement("div");
+    player.setAttribute("class", "form-group");
+    const pLabel = document.createElement("label");
+    pLabel.setAttribute("for", `Player-${playerType}`);
+    pLabel.setAttribute("class", "extra-space");
+    pLabel.textContent = `Player ${playerType}:`;
+    const pInput = document.createElement("input");
+    pInput.setAttribute("required", "");
+    pInput.setAttribute("type", "text");
+    pInput.setAttribute("id", `Player-${playerType}`);
+    pInput.setAttribute("Placeholder", `Player ${playerType} name`);
+    player.appendChild(pLabel);
+    player.appendChild(pInput);
+    inputForm.appendChild(player);
+  };
+
+  const addInputInterface = (changeName) => {
+    // clear Player move
+    display.textContent = "Change the player's name above";
+
+    // Stop the game until user name has been changed.
+    pOne.setName(false);
+    pTwo.setName(false);
+
+    const inputForm = document.createElement("form");
+    inputForm.setAttribute("class", "form player");
+
+    setUpInputForm(inputForm, "One");
+    setUpInputForm(inputForm, "Two");
+
+    const submitBtn = document.createElement("div");
+    submitBtn.setAttribute("type", "button");
+    submitBtn.setAttribute("class", "btn btn-primary user-input");
+    submitBtn.textContent = "submit";
+
+    submitBtn.addEventListener("click", function () {
+      let setNameSuccess;
+
+      setNameSuccess = setName(pOne, pTwo);
+
+      if (!setNameSuccess) {
+        return;
+      }
+      interface.displayPlayer(
+        displayController.getCurrentPLayer(),
+        gameBoard.checkGameOver(),
+        gameBoard.checkHasWinner()
+      );
+      removeInputInterface();
+      changeName.classList.remove("active");
+    });
+
+    inputForm.appendChild(submitBtn);
+    changeName.after(inputForm);
+  };
+
+  // Allow player to change names
+  const allowChangeName = () => {
+    const changeName = document.createElement("button");
+    changeName.setAttribute("class", "btn btn-info");
+    changeName.setAttribute("id", "change-Name");
+    changeName.textContent = "Change Player name";
+    restartBtn.after(changeName);
+
+    changeName.addEventListener("click", function () {
+      if (changeName.classList.contains("active")) {
+        return; // only allow one instance of name change
+      }
+      changeName.classList.add("active");
+
+      addInputInterface(changeName);
+    });
+  };
+
   const displayPlayer = (currentPlayer, gameOver, hasWinner) => {
     const name = currentPlayer.getName();
+    if (!name) {
+      return;
+    }
+
     if (!gameOver) {
       display.textContent = `It's ${name}'s move.`;
       return;
@@ -148,11 +270,13 @@ const interface = (() => {
     }
   };
 
+  // Removes the user input form
   const removeInputInterface = () => {
     const inputInterface = document.querySelector(".form.player");
     main.removeChild(inputInterface);
   };
 
+  // Resets the display
   const reset = () => {
     display.textContent = "";
   };
@@ -201,13 +325,21 @@ const displayController = (() => {
     }
   };
 
+  // Restarts the game
   const restartGame = () => {
     gameBoard.reset();
     interface.reset();
     currentPlayer = one;
+    interface.displayPlayer(
+      currentPlayer,
+      gameBoard.checkGameOver(),
+      currentPlayer
+    );
   };
 
-  return { playNewGame, restartGame };
+  const getCurrentPLayer = () => currentPlayer;
+
+  return { playNewGame, restartGame, getCurrentPLayer };
 })(document);
 
 displayController.playNewGame();

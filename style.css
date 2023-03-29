@@ -10,11 +10,11 @@ body {
   margin-bottom: 20px;
 }
 
-.container {
+.content {
   display: flex;
   gap: 20px;
   height: 70vh;
-  width: 45vw;
+  width: 60vw;
 }
 
 .grids {
@@ -33,4 +33,28 @@ body {
   justify-content: center;
   align-items: center;
   font-size: 3rem;
+}
+
+input.invalid {
+  border-color: red;
+}
+
+.interface {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+
+form {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* for some unknwon reason the exact same text would take up
+      different space (same font style, size, margin...)
+      so this is to handle this */
+label.extra-space {
+  margin-right: 5px;
 }
