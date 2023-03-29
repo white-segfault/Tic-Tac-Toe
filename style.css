@@ -1,0 +1,36 @@
+body {
+  height: 90vh;
+  width: 90vw;
+  padding-top: 50px;
+  padding-left: 100px;
+}
+
+.title {
+  font-size: 2rem;
+  margin-bottom: 20px;
+}
+
+.container {
+  display: flex;
+  gap: 20px;
+  height: 70vh;
+  width: 45vw;
+}
+
+.grids {
+  gap: 20px;
+  border-style: hidden;
+  display: grid;
+  grid-template-columns: repeat(3, 200px);
+  grid-template-rows: repeat(3, 200px);
+}
+
+.grids .cell {
+  border-color: #e1a0f9;
+  border-style: outset;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 3rem;
+}
